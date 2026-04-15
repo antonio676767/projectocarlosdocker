@@ -35,10 +35,9 @@ services:
     volumes:
       - wp_data:/data
     entrypoint: /bin/sh
-    command: -c "
-      apk add --no-cache git &&
+    command: |
+      apk add --no-cache git
       git clone https://github.com/usuario/tu-repo.git /data/repo
-    "
 
 volumes:
   db_data:
