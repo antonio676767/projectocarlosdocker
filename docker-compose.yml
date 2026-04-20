@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
 
@@ -6,6 +6,7 @@ services:
     image: mysql:5.7
     container_name: wordpress_db
     restart: always
+    command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_DATABASE: wordpress
       MYSQL_USER: wp_user
@@ -13,10 +14,13 @@ services:
       MYSQL_ROOT_PASSWORD: root_pass
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - wp_net
 
   wordpress:
-    image: wordpress:latest
+    image: wordpress:php8.2-apache
     container_name: wordpress_app
+    restart: always
     depends_on:
       - db
     ports:
@@ -27,13 +31,16 @@ services:
       WORDPRESS_DB_PASSWORD: wp_pass
       WORDPRESS_DB_NAME: wordpress
     volumes:
-      - ./app:/var/www/html
+      - wp_data:/var/www/html
+    networks:
+      - wp_net
 
   git-updater:
     image: alpine/git
     container_name: git_updater
+    restart: "no"
     volumes:
-      - ./app:/repo
+      - wp_data:/repo
     entrypoint: >
       sh -c "
       if [ ! -d /repo/.git ]; then
@@ -45,3 +52,7 @@ services:
 
 volumes:
   db_data:
+  wp_data:
+
+networks:
+  wp_net:
