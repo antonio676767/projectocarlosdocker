@@ -32,6 +32,7 @@ services:
       WORDPRESS_DB_NAME: wordpress
     volumes:
       - wp_data:/var/www/html
+      - ./themes:/var/www/html/wp-content/themes
     networks:
       - wp_net
 
@@ -40,14 +41,25 @@ services:
     container_name: git_updater
     restart: "no"
     volumes:
-      - wp_data:/repo
+      - ./themes:/repo
     entrypoint: >
       sh -c "
-      if [ ! -d /repo/.git ]; then
-        git clone https://github.com/TU_USUARIO/TU_REPO.git /repo;
+      echo '--- Iniciando actualización de temas desde Git ---' &&
+      # SUSTITUYE LA URL por tu repositorio real de GitHub
+      REPO_URL='https://github.com/TU_USUARIO/TU_REPOSITORIO.git' &&
+      
+      if [ ! -d '/repo/.git' ]; then
+        echo 'Clonando repositorio...' &&
+        git clone $$REPO_URL /repo;
       else
+        echo 'Actualizando repositorio existente...' &&
         cd /repo && git pull;
-      fi
+      fi &&
+      
+      echo 'Ajustando permisos para WordPress...' &&
+      # Esto permite que el contenedor de WordPress (UID 33) lea los archivos
+      chown -R 33:33 /repo &&
+      chmod -R 755 /repo
       "
 
 volumes:

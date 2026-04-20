@@ -2,19 +2,21 @@ Vagrant.configure("2") do |config|
 
   config.vm.box = "ubuntu/jammy64"
 
-  #puerto de acceso
+  # 🔥 acceso correcto a WordPress
   config.vm.network "forwarded_port", guest: 8080, host: 8080
 
   # carpeta compartida
   config.vm.synced_folder ".", "/home/vagrant/proyecto"
 
-  #primera vez que se ejecuta
+  # --------------------------
+  # SETUP INICIAL
+  # --------------------------
   config.vm.provision "shell", run: "once", inline: <<-SHELL
-    echo "---- actualizr sistema ----"
+    echo "---- UPDATE SYSTEM ----"
     apt-get update -y
     apt-get upgrade -y
 
-    echo "---- descargando docker ----"
+    echo "---- INSTALL DOCKER ----"
     apt-get install -y ca-certificates curl gnupg
 
     install -m 0755 -d /etc/apt/keyrings
@@ -32,24 +34,30 @@ Vagrant.configure("2") do |config|
     systemctl enable docker
     systemctl start docker
 
-    echo "---- carpeta central ----"
-    mkdir -p /home/vagrant/proyecto/app
+    echo "---- PROJECT STRUCTURE ----"
+    mkdir -p /home/vagrant/proyecto/themes
 
-    echo "---- arrancar docker ----"
+    echo "---- START DOCKER ----"
     cd /home/vagrant/proyecto
     docker compose up -d || true
   SHELL
 
-  #vagrant provision
+  # --------------------------
+  # UPDATE PROVISION
+  # --------------------------
   config.vm.provision "shell", inline: <<-SHELL
+    echo "---- UPDATE THEMES ----"
 
     cd /home/vagrant/proyecto
+
     docker compose run --rm git-updater || true
 
     docker compose up -d
   SHELL
 
- #esto hace falta para que arranque la maquina virtual sin que parpade la pantalla (bug)
+  # --------------------------
+  # VIRTUALBOX FIX
+  # --------------------------
   config.vm.provider "virtualbox" do |vb|
     vb.customize ["modifyvm", :id, "--graphicscontroller", "vmsvga"]
     vb.customize ["modifyvm", :id, "--vram", "128"]
